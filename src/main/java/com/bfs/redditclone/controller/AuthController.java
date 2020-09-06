@@ -3,13 +3,19 @@ package com.bfs.redditclone.controller;
 
 import com.bfs.redditclone.dto.AuthenticationResponse;
 import com.bfs.redditclone.dto.LoginRequest;
+import com.bfs.redditclone.dto.RefreshTokenRequest;
 import com.bfs.redditclone.dto.RegisterRequest;
 import com.bfs.redditclone.service.AuthService;
 import com.bfs.redditclone.service.RefreshTokenService;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,17 +28,27 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody RegisterRequest registerRequest) {
         authService.signup(registerRequest);
-        return new ResponseEntity<>("User Registration Successfully", HttpStatus.OK);
+        return new ResponseEntity<>("User Registration Successfully", OK);
     }
 
     @PostMapping("accountVerification/{token}")
     public ResponseEntity<String> verifyAccount(@PathVariable String token) {
         authService.verifyAccount(token);
-        return new ResponseEntity<>("Account Activated Successfully", HttpStatus.OK);
+        return new ResponseEntity<>("Account Activated Successfully", OK);
     }
 
     @PostMapping("/login")
     public AuthenticationResponse login(@RequestBody LoginRequest loginRequest) {
-        return authService.login()
+        return authService.login(loginRequest);
+    }
+
+    public AuthenticationResponse refreshTokens(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return authService.refreshToken(refreshTokenRequest);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.deleteRefreshToken(refreshTokenRequest.getRefreshToken());
+        return ResponseEntity.status(OK).body("Refresh Token Deleted Successfully!");
     }
 }
